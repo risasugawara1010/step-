@@ -17,6 +17,7 @@
         <div class="mb-3">
             <select class="form-select" id="company_id" name="company_id">
                 @foreach($companies as $company)
+                    <option></option>
                     <option value="{{ $company->id }}">{{ $company->company_name }}</option>
                 @endforeach
             </select>

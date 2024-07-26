@@ -21,13 +21,21 @@ Route::get('/', function () {
 
 
 
-Auth::routes();
 
-
-
-Route::group(['middleware' => 'auth'], function () {
-    Route::resource('products', ProductController::class);
-});
 Auth::routes();
 
 Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
+use App\Http\Controllers\HomeController;
+
+Route::get('/home', [HomeController::class, 'redirectToProducts'])->name('home');
+
+
+Route::resource('products', ProductController::class);
+
+Route::get('/products', [ProductController::class, 'index'])->name('products.index');
+
+Route::get('/products/{id}', [ProductController::class, 'show'])->name('products.detail');
+
+Route::put('/products/{product}', [ProductController::class, 'update'])->name('products.update');
+
+Route::get('/products/{product}/edit', [ProductController::class, 'edit'])->name('products.edit');

@@ -5,11 +5,30 @@ namespace App\Http\Controllers;
 
 use App\Models\Product;
 use App\Models\Company;
-use Illuminate\Http\Request;
+use App\Http\Requests\Request;
+use Illuminate\Support\Facades\DB;
 
 
 class ProductController extends Controller
 {
+    public function regist(Request $request) {
+
+        // トランザクション開始
+        DB::beginTransaction();
+    
+        try {
+            // 登録処理呼び出し
+            $model = new Product();
+            $model->Product($request);
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollback();
+            return back();
+        }
+
+        return redirect(route('product'));
+    
+    }
     
     public function index(Request $request)
     {
@@ -82,16 +101,16 @@ class ProductController extends Controller
 
     public function show(Product $product)
     {
-        
+    
         return view('products.show', ['product' => $product]);
     
     }
 
+
+
     public function edit(Product $product)
     {
-        
         $companies = Company::all();
-        
         
         return view('products.edit', compact('product', 'companies'));
     }

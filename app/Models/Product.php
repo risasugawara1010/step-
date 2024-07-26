@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 class Product extends Model
 {
@@ -18,13 +19,25 @@ class Product extends Model
         'img_path',
     ];
 
-    // Productモデルがsalesテーブルとリレーション関係を結ぶためのメソッドです
+    public function regist($data) {
+        // 登録処理
+        DB::table('products')->insert([
+            'product_name' => $data->product_name,
+            'price' => $data->price,
+            'stock' => $data->stock,
+            'company_id' => $data->company_id,
+            'comment' => $data->comment,
+            'img_path' => $data->img_path,
+        ]);
+    }
+
+
     public function sales()
     {
         return $this->hasMany(Sale::class);
     }
 
-    // Productモデルがcompanysテーブルとリレーション関係を結ぶ為のメソッドです
+
     public function company()
     {
         return $this->belongsTo(Company::class);
