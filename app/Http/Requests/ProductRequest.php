@@ -4,7 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class Request extends FormRequest
+class ProductRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -50,7 +50,7 @@ public function messages() {
         'company_id.required' => ':attributeは必須項目です。',
         'price.required' => ':attributeは必須項目です。',
         'stock.required' => ':attributeは必須項目です。',
-        
+
     ];
 }
 
