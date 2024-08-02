@@ -6,10 +6,8 @@
 
 
     <form method="POST" action="{{ route('products.store') }}" enctype="multipart/form-data">
-
+       
         @csrf
-
-
 
         <div class="mb-3">
             <label for="product_name" class="form-label">商品名*</label>
@@ -30,6 +28,7 @@
             @if($errors->has('company_id'))
                         <p>{{ $errors->first('company_id') }}</p>
             @endif
+            
         </div>
 
         <div class="mb-3">
@@ -38,7 +37,7 @@
             @if($errors->has('price'))
                         <p>{{ $errors->first('price') }}</p>
             @endif
-        </div>
+            
 
         <div class="mb-3">
             <label for="stock" class="form-label">在庫数*</label>
@@ -46,6 +45,7 @@
             @if($errors->has('stock'))
                         <p>{{ $errors->first('stock') }}</p>
             @endif
+            
         </div>
 
         <div class="mb-3">

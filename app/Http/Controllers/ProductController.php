@@ -6,9 +6,11 @@ namespace App\Http\Controllers;
 use App\Models\Product;
 use App\Models\Company;
 use App\Http\Requests\ProductRequest;
-use Illuminate\Http\Request; 
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
+use Illuminate\Support\Facades\Log;
+use Exception;
 
 class ProductController extends Controller
 {
@@ -43,43 +45,39 @@ class ProductController extends Controller
     {
         
         $companies = Company::all();
+        $products = Product::all();
 
         return view('products.create', compact('companies'));
     }
 
     
-    public function store(Request $request)
+    public function store(ProductRequest $request)
     {
-        
-        $request->validate([
-            'product_name' => 'required', 
-            'company_id' => 'required',
-            'price' => 'required',
-            'stock' => 'required',
-            'comment' => 'nullable',
-            'img_path' => 'nullable|image|max:2048',
-        ]);
-        
-        
-        
-        $product = new Product([
-            'product_name' => $request->get('product_name'),
-            'company_id' => $request->get('company_id'),
-            'price' => $request->get('price'),
-            'stock' => $request->get('stock'),
-            'comment' => $request->get('comment'),
-        ]);
-        
-        if($request->hasFile('img_path')){ 
-            $filename = $request->img_path->getClientOriginalName();
-            $filePath = $request->img_path->storeAs('products', $filename, 'public');
-            $product->img_path = '/storage/' . $filePath;
+        $product = new Product();
+            $image = $request->file('image');
+            $image_path = null;
+            
+            if($request->hasFile('img_path')){ 
+                $filename = $request->img_path->getClientOriginalName();
+                $filePath = $request->img_path->storeAs('products', $filename, 'public');
+                $product->img_path = '/storage/' . $filePath;
+            }
+
+            DB::beginTransaction();
+        try {
+            $model = new Product();
+            $model->registerProduct($request, $image_path);
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::debug($e->getMessage());
+            return back();
         }
-        
+
         $product->save();
 
-        
-        return redirect('products');
+        return redirect(route('products.index'));
+
     }
 
     public function show(Product $product)
@@ -94,38 +92,60 @@ class ProductController extends Controller
     public function edit(Product $product)
     {
         $companies = Company::all();
-        
+
         return view('products.edit', compact('product', 'companies'));
     }
+    
+    public function update(Request $request, Product $product) {
+        try {
+            
+            $request -> validate([
+                'product_name' => 'required',
+                'price' => 'required',
+                'stock' => 'required',
+            ]);
 
-    public function update(Request $request, Product $product)
-    {
-        
-        $request->validate([
-            'product_name' => 'required',
-            'price' => 'required',
-            'stock' => 'required',
-        ]);
-        
+            $product -> product_name = $request -> product_name;
+            $product -> company_id = $request -> company_id;
+            $product -> price = $request -> price;
+            $product -> stock = $request -> stock;
+            $product -> comment = $request -> comment;
 
-        $product->product_name = $request->product_name;
-        $product->price = $request->price;
-        $product->stock = $request->stock;
+            if ($request -> hasFile('img_path')) {
+                $file_name = $request -> img_path -> getClientOriginalName();
+                $file_path = $request -> img_path -> storeAs('products', $file_name, 'public');
+                $product -> img_path = '/storage/' . $file_path;
+            }
 
-        $product->save();
-        
+            
+            $product -> save();
 
-        return redirect()->route('products.index')
-            ->with('success', 'Product updated successfully');
-        
+            return redirect() -> route('products.index') -> with('success', 'Product updated successfully');
+
+        } catch (Exception $e) {
+            Log::debug($e->getMessage());
+        }
     }
 
-    public function destroy(Product $product)
+    
 
+    public function destroy($id)
     {
-        $product->delete();
-
-        return redirect('/products');
         
+        try {
+
+            $product = Product::find($id);
+            $product->delete();
+
+        } catch (\Exception $e) {
+            Log::debug($e->getMessage());
+            
+        }
+
+
+        return redirect(route('products.index'));
     }
+    
+    
+     
 }
