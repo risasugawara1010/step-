@@ -5,12 +5,12 @@ namespace App\Http\Controllers;
 
 use App\Models\Product;
 use App\Models\Company;
-use App\Http\Requests\ProductRequest;
 use Illuminate\Http\Request;
+use App\Http\Requests\ProductRequest;
 use Illuminate\Support\Facades\DB;
 
-use Illuminate\Support\Facades\Log;
 use Exception;
+use Illuminate\Support\Facades\Log;
 
 class ProductController extends Controller
 {
@@ -53,31 +53,33 @@ class ProductController extends Controller
     
     public function store(ProductRequest $request)
     {
-        $product = new Product();
-            $image = $request->file('image');
-            $image_path = null;
-            
-            if($request->hasFile('img_path')){ 
-                $filename = $request->img_path->getClientOriginalName();
-                $filePath = $request->img_path->storeAs('products', $filename, 'public');
-                $product->img_path = '/storage/' . $filePath;
-            }
+        $product = new Product([
+            'product_name' => $request->get('product_name'),
+            'company_id' => $request->get('company_id'),
+            'price' => $request->get('price'),
+            'stock' => $request->get('stock'),
+            'comment' => $request->get('comment'),
+        ]);
 
-            DB::beginTransaction();
-        try {
-            $model = new Product();
-            $model->registerProduct($request, $image_path);
-            DB::commit();
-        } catch (\Exception $e) {
-            DB::rollback();
-            Log::debug($e->getMessage());
-            return back();
+        if($request->hasFile('img_path')){ 
+            $filename = $request->img_path->getClientOriginalName();
+            $filePath = $request->img_path->storeAs('products', $filename, 'public');
+            $product->img_path = '/storage/' . $filePath;
         }
 
-        $product->save();
+        DB::beginTransaction();
 
-        return redirect(route('products.index'));
+        try {
+            $product->save();
 
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back();
+        
+        }
+
+        return redirect('products');
     }
 
     public function show(Product $product)
@@ -96,14 +98,7 @@ class ProductController extends Controller
         return view('products.edit', compact('product', 'companies'));
     }
     
-    public function update(Request $request, Product $product) {
-        try {
-            
-            $request -> validate([
-                'product_name' => 'required',
-                'price' => 'required',
-                'stock' => 'required',
-            ]);
+    public function update(ProductRequest $request, Product $product) {
 
             $product -> product_name = $request -> product_name;
             $product -> company_id = $request -> company_id;
@@ -117,13 +112,18 @@ class ProductController extends Controller
                 $product -> img_path = '/storage/' . $file_path;
             }
 
+
+        DB::beginTransaction();
+        try {
             
             $product -> save();
 
             return redirect() -> route('products.index') -> with('success', 'Product updated successfully');
+            DB::commit();
 
-        } catch (Exception $e) {
-            Log::debug($e->getMessage());
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back();
         }
     }
 

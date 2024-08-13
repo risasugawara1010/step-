@@ -24,38 +24,51 @@ class ProductRequest extends FormRequest
     public function rules()
     {
         return [
-            'product_name' => 'required | max:255',
-            'company_id' => 'required',
-            "price" => 'required | integer',
-            "stock" => 'required | integer',
-            'comment' => 'nullable',
-            'img_path' => 'nullable|image|max:2048',
-            
+            "product_name" => 'required|max:255',
+            "company_id" => 'required',
+            "price" => 'required|integer',
+            "stock" => 'required|integer',
+            "comment" => 'max:10000',
+            "img_path" => 'nullable|mimes:jpg,jpeg,png,gif|max:2048', 
         ];
     }
 
+
+    /**
+     * 項目名
+     *
+     * @return array
+     */
     public function attributes()
-{
-    return [
-        'product_name' => '商品名',
-        'company_id' => 'メーカー名',
-        'price' => '価格',
-        'stock' => '在庫',
-        'comment' => 'コメント',
-    ];
-}
+    {
+        return [
+            'product_name' => '商品名',
+            'company_id' => 'メーカー名',
+            'price' => '価格',
+            'stock' => '在庫',
+            'comment' => 'コメント',
+            'img_path' => '商品画像',
+        ];
+    }
 
-public function messages() {
-    return [
-        'product_name.required' => ':attributeは必須項目です。',
-        'product_name.max' => ':attributeは:max字以内で入力してください。',
-        'company_id.required' => ':attributeは必須項目です。',
-        'price.required' => ':attributeは必須項目です。',
-        'price.integer' => ':数値を入力してください。',
-        'stock.required' => ':attributeは必須項目です。',
-        'stock.integer' => ':数値を入力してください。',
-
-    ];
-}
-
+    /**
+     * エラーメッセージ
+     *
+     * @return array
+     */
+    public function messages()
+    {
+        return [
+            'product_name.required' => ':attributeは必須項目です。',
+            'product_name.max' => ':attributeは:max字以内で入力してください。',
+            'company_id.required' => ':attributeは必須項目です。',
+            'price.required' => ':attributeは必須項目です。',
+            'price.integer' => ':数値を入力してください。',
+            'stock.required' => ':attributeは必須項目です。',
+            'stock.integer' => ':数値を入力してください。',
+            'comment.max' => ':attributeは:max字以内で入力してください。',
+            'img_path.mimes' => ':attributeはjpg、jpeg、png、gif形式のみ受け付けます。',
+            'img_path.max' => ':attributeは2048KB以下のファイルを選択してください。',
+        ];
+    }
 }

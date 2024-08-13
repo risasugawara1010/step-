@@ -12,8 +12,11 @@
         <div class="mb-3">
             <label for="product_name" class="form-label">商品名*</label>
             <input id="product_name" type="text" name="product_name" class="form-control" value="{{ old('product_name') }}" required>
-            @if($errors->has('product_name'))
-                        <p>{{ $errors->first('product_name') }}</p>
+            @if ($errors->has('product_name'))
+               <span class="invalid-feedback" role="alert">
+                        {{ $errors->first('product_name') }}
+               
+               </span>
             @endif
         </div>
 
