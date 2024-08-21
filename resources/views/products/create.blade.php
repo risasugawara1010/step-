@@ -11,18 +11,15 @@
 
         <div class="mb-3">
             <label for="product_name" class="form-label">商品名*</label>
-            <input id="product_name" type="text" name="product_name" class="form-control" value="{{ old('product_name') }}" required>
+            <input id="product_name" type="text" name="product_name" class="form-control" value="{{ old('product_name') }}">
             @if ($errors->has('product_name'))
-               <span class="invalid-feedback" role="alert">
-                        {{ $errors->first('product_name') }}
-               
-               </span>
+                        <p>{{ $errors->first('product_name') }}</p>
             @endif
         </div>
 
         <div class="mb-3">
             <label for="company_id" class="form-label">メーカー名*</label>
-            <select class="form-select" id="company_id" name="company_id" value="{{ old('company_id') }}" required>
+            <select class="form-select" id="company_id" name="company_id" value="{{ old('company_id') }}">
                 @foreach($companies as $company)
                     <option></option>
                     <option value="{{ $company->id }}">{{ $company->company_name }}</option>
@@ -36,7 +33,7 @@
 
         <div class="mb-3">
             <label for="price" class="form-label">価格*</label>
-            <input id="price" type="text" name="price" class="form-control" value="{{ old('price') }}" required>
+            <input id="price" type="text" name="price" class="form-control" value="{{ old('price') }}">
             @if($errors->has('price'))
                         <p>{{ $errors->first('price') }}</p>
             @endif
@@ -44,7 +41,7 @@
 
         <div class="mb-3">
             <label for="stock" class="form-label">在庫数*</label>
-            <input id="stock" type="text" name="stock" class="form-control" value="{{ old('stock') }}" required>
+            <input id="stock" type="text" name="stock" class="form-control" value="{{ old('stock') }}">
             @if($errors->has('stock'))
                         <p>{{ $errors->first('stock') }}</p>
             @endif
