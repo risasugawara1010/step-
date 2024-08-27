@@ -24,19 +24,23 @@ class ProductController extends Controller
         $companyId = $request->input('company_id');
 
         if (!empty($keyword)) {
-            $products->where('name', 'LIKE', "%{$keyword}%")
-                    ->orWhere('comment', 'LIKE', "%{$keyword}%");
+            $query->where('product_name', 'LIKE', "%{$keyword}%");
         }
-
+    
+    
         if (!empty($companyId)) {
-            $companies->where('company_id', $companyId);
+            $query->where('company_id', $companyId);
         }
-
 
         $products = $query->paginate(10);
         
         
-        return view('products.index', ['products' => $products,'companies' => $companies,]);
+        return view('products.index', [
+            'products' => $products,
+            'companies' => $companies,
+            'keyword' => $keyword,
+            'companyId' => $companyId
+        ]);
         
 
     }
@@ -73,9 +77,11 @@ class ProductController extends Controller
             $product->save();
 
             DB::commit();
+            session()->flash('success', '製品が正常に作成されました。');
+            return redirect()->back();
         } catch (\Exception $e) {
             DB::rollBack();
-            return back();
+            return back()->withErrors(['エラーが発生しました。製品の作成に失敗しました。']);
         
         }
 
