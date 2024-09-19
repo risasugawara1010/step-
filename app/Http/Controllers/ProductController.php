@@ -106,11 +106,11 @@ class ProductController extends Controller
     
     public function update(ProductRequest $request, Product $product) {
 
-            $product -> product_name = $request -> product_name;
-            $product -> company_id = $request -> company_id;
-            $product -> price = $request -> price;
-            $product -> stock = $request -> stock;
-            $product -> comment = $request -> comment;
+        $product->product_name = $request->product_name;
+        $product->company_id = $request->company_id;
+        $product->price = $request->price;
+        $product->stock = $request->stock;
+        $product->comment = $request->comment;
 
             if ($request -> hasFile('img_path')) {
                 $file_name = $request -> img_path -> getClientOriginalName();
@@ -124,12 +124,13 @@ class ProductController extends Controller
             
             $product -> save();
 
-            return redirect() -> route('products.index') -> with('success', 'Product updated successfully');
             DB::commit();
+
+            return redirect()->back()->with('success', '製品が正常に更新されました。');
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return back();
+            return back()->withErrors(['エラーが発生しました。製品の更新に失敗しました。']);
         }
     }
 
