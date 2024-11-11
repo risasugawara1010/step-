@@ -17,6 +17,17 @@ class ProductController extends Controller
     
     public function index(Request $request)
     {
+        $companies = Company::all();
+        $products = Product::latest()->paginate(10);
+
+        return view('products.index', [
+            'products' => $products,
+            'companies' => $companies,
+        ]);
+    }
+
+    public function search(Request $request)
+    {
         $query = Product::query();
         $companies = Company::all();
 
@@ -26,23 +37,45 @@ class ProductController extends Controller
         if (!empty($keyword)) {
             $query->where('product_name', 'LIKE', "%{$keyword}%");
         }
-    
-    
+
         if (!empty($companyId)) {
             $query->where('company_id', $companyId);
         }
 
+        // 最小価格が指定されている場合、その価格以上の商品をクエリに追加
+        if ($min_price = $request->min_price) {
+            $query->where('price', '>=', $min_price);
+        }
+
+        // 最大価格が指定されている場合、その価格以下の商品をクエリに追加
+        if ($max_price = $request->max_price) {
+            $query->where('price', '<=', $max_price);
+        }
+
+        // 最小在庫数が指定されている場合、その在庫数以上の商品をクエリに追加
+        if ($min_stock = $request->min_stock) {
+            $query->where('stock', '>=', $min_stock);
+        }
+
+        // 最大在庫数が指定されている場合、その在庫数以下の商品をクエリに追加
+        if ($max_stock = $request->max_stock) {
+            $query->where('stock', '<=', $max_stock);
+        }
+
+        // ソートのパラメータが指定されている場合、そのカラムでソートを行う
+        if ($sort = $request->sort) {
+            $direction = $request->direction == 'desc' ? 'desc' : 'asc';
+            $query->orderBy($sort, $direction);
+        }
+
         $products = $query->paginate(10);
-        
-        
-        return view('products.index', [
+
+        return response()->json([
             'products' => $products,
             'companies' => $companies,
             'keyword' => $keyword,
             'companyId' => $companyId
         ]);
-        
-
     }
 
     public function create()
@@ -137,21 +170,23 @@ class ProductController extends Controller
     
 
     public function destroy($id)
-    {
-        
-        try {
-
-            $product = Product::find($id);
-            $product->delete();
-
-        } catch (\Exception $e) {
-            Log::debug($e->getMessage());
-            
-        }
-
-
-        return redirect(route('products.index'));
+{
+    try {
+        $product = Product::findOrFail($id);
+        $product->delete();
+        return response()->json([
+            'success' => true,
+            'message' => '商品が正常に削除されました。',
+            'deleted_id' => $id
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => '商品の削除に失敗しました。',
+            'error' => $e->getMessage()
+        ], 500);
     }
+}
     
     
      

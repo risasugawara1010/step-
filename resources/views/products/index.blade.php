@@ -23,6 +23,26 @@
                   @endforeach
              </select>
         </div>
+
+        <!-- 最小価格の入力欄 -->
+        <div class="col-sm-12 col-md-2">
+            <input type="number" name="min_price" class="form-control" placeholder="最小価格" value="{{ request('min_price') }}">
+        </div>
+
+        <!-- 最大価格の入力欄 -->
+        <div class="col-sm-12 col-md-2">
+            <input type="number" name="max_price" class="form-control" placeholder="最大価格" value="{{ request('max_price') }}">
+        </div>
+
+        <!-- 最小在庫数の入力欄 -->
+        <div class="col-sm-12 col-md-2">
+            <input type="number" name="min_stock" class="form-control" placeholder="最小在庫" value="{{ request('min_stock') }}">
+        </div>
+
+        <!-- 最大在庫数の入力欄 -->
+        <div class="col-sm-12 col-md-2">
+            <input type="number" name="max_stock" class="form-control" placeholder="最大在庫" value="{{ request('max_stock') }}">
+        </div>
         
                 
          <div class="col-sm-12 col-md-1">
@@ -44,8 +64,14 @@
                     <th>ID</th>
                     <th>商品画像</th>
                     <th>商品名</th>
-                    <th>価格</th>
-                    <th>在庫数</th>
+                    <th>価格
+                    <a href="{{ request()->fullUrlWithQuery(['sort' => 'price', 'direction' => 'asc']) }}">↑</a>
+                    <a href="{{ request()->fullUrlWithQuery(['sort' => 'price', 'direction' => 'desc']) }}">↓</a>
+                    </th>
+                    <th>在庫数
+                    <a href="{{ request()->fullUrlWithQuery(['sort' => 'stock', 'direction' => 'asc']) }}">↑</a>
+                    <a href="{{ request()->fullUrlWithQuery(['sort' => 'stock', 'direction' => 'desc']) }}">↓</a>
+                    </th>
                     <th>メーカー名</th>
                     
                     <a href="{{ route('products.create') }}" class="btn btn-primary mb-3">商品新規登録</a>
@@ -69,13 +95,17 @@
                         <form method="POST" action="{{ route('products.destroy', $product) }}" class="d-inline">
                             @csrf
                             @method('DELETE')
-                            <button type="submit" class="btn btn-danger btn-sm mx-1" onclick="return confirm('本当に削除しますか？')">削除</button>
+                            <button data-id="{{ $product->id }}" data-url="{{ route('products.destroy', $product->id) }}" type="button" class="btn btn-danger delete-btn">削除</button>
                         </form>
                     </td>
                 </tr>
             @endforeach
+
+            
             </tbody>
         </table>
+        
+        
     </div>
 
     {{ $products->appends(request()->query())->links() }}
