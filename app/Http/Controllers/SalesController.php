@@ -7,13 +7,12 @@ use App\Models\Product; // Productモデルを使用
 use App\Models\Sale; // Saleモデルを使用
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Exception;
 
 class SalesController extends Controller
 {
     public function purchase(Request $request){
 
-    
-try{
     // リクエストから必要なデータを取得する
     $productId = $request->input('product_id'); // "product_id":7が送られた場合は7が代入される
     $quantity = $request->input('quantity', 1); // 購入する数を代入する もしも”quantity”というデータが送られていない場合は1を代入する
@@ -29,25 +28,26 @@ try{
         return response()->json(['message' => '商品が在庫不足です'], 400);
     }
 
-    // 在庫を減少させる
-    $product->stock -= $quantity; // $quantityは購入数を指し、デフォルトで1が指定されている
-    $product->save();
+    
+    try{
+        // 在庫を減少させる
+        $product->stock -= $quantity; // $quantityは購入数を指し、デフォルトで1が指定されている
+        $product->save();
 
 
-    // Salesテーブルに商品IDと購入日時を記録する
-    $sale = new Sale([
-        'product_id' => $productId,
+        // Salesテーブルに商品IDと購入日時を記録する
+        $sale = new Sale([
+            'product_id' => $productId,
         // 主キーであるIDと、created_at , updated_atは自動入力されるため不要
-    ]);
+        ]);
 
-    $sale->save();
+        $sale->save();
 
-    // レスポンスを返す
-    return response()->json(['message' => '購入成功']);
-        }catch (Exception $e) {
+        // レスポンスを返す
+        return response()->json(['message' => '購入成功']);
+            }catch (Exception $e) {
         // エラー内容表示
         Log::debug($e->getMessage()); 
-    }
-  }      
+        }
+    }      
 }
-

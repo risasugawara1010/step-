@@ -1,142 +1,141 @@
 <?php
-
-
 namespace App\Http\Controllers;
 
-use App\Models\Product;
-use App\Models\Company;
-use Illuminate\Http\Request;
+use App\Models\Product; 
+use App\Models\Company; 
+use Illuminate\Http\Request; 
 use App\Http\Requests\ProductRequest;
 use Illuminate\Support\Facades\DB;
-
-use Exception;
 use Illuminate\Support\Facades\Log;
 
-class ProductController extends Controller
+class ProductController extends Controller 
 {
-    
+
     public function index(Request $request)
     {
-        $companies = Company::all();
-        $products = Product::latest()->paginate(10);
+    $query = Product::query();
 
-        return view('products.index', [
-            'products' => $products,
-            'companies' => $companies,
-        ]);
+    $companies = Company::all();
+
+    $query->when(
+        $request->filled('search'),
+        fn($q) => $q->where('product_name', 'like', "%{$request->search}%")
+    );
+    
+    // 商品名の検索キーワードがある場合、そのキーワードを含む商品をクエリに追加
+    if($search = $request->search){
+        $query->where('product_name', 'LIKE', "%{$search}%");
     }
+
+    // 最小価格が指定されている場合、その価格以上の商品をクエリに追加
+    if($min_price = $request->min_price){
+        $query->where('price', '>=', $min_price);
+    }
+
+    // 最大価格が指定されている場合、その価格以下の商品をクエリに追加
+    if($max_price = $request->max_price){
+        $query->where('price', '<=', $max_price);
+    }
+
+    // 最小在庫数が指定されている場合、その在庫数以上の商品をクエリに追加
+    if($min_stock = $request->min_stock){
+        $query->where('stock', '>=', $min_stock);
+    }
+
+    // 最大在庫数が指定されている場合、その在庫数以下の商品をクエリに追加
+    if($max_stock = $request->max_stock){
+        $query->where('stock', '<=', $max_stock);
+    }
+   
+    if ($company_id = $request->company_id) {
+        $query->where('company_id', $company_id);
+    }
+    // ソートのパラメータが指定されている場合、そのカラムでソートを行う
+    if($sort = $request->sort){
+        $direction = $request->direction == 'desc' ? 'desc' : 'asc'; 
+        $query->orderBy($sort, $direction);
+    }
+
+    
+    $products = $query->paginate(10);
+
+
+    if ($request->ajax()) {
+        return view('products.index', compact('products', 'companies'))->renderSections()['content'];
+    }
+    
+    return view('products.index', [
+        'products' => $products,
+        'companies' => $companies,
+        'search' => $request->search
+    ]);
+    
+    }
+
 
     public function search(Request $request)
     {
-        $query = Product::query();
-        $companies = Company::all();
-
-        $keyword = $request->input('keyword');
-        $companyId = $request->input('company_id');
-
-        if (!empty($keyword)) {
-            $query->where('product_name', 'LIKE', "%{$keyword}%");
-        }
-
-        if (!empty($companyId)) {
-            $query->where('company_id', $companyId);
-        }
-
-        // 最小価格が指定されている場合、その価格以上の商品をクエリに追加
-        if ($min_price = $request->min_price) {
-            $query->where('price', '>=', $min_price);
-        }
-
-        // 最大価格が指定されている場合、その価格以下の商品をクエリに追加
-        if ($max_price = $request->max_price) {
-            $query->where('price', '<=', $max_price);
-        }
-
-        // 最小在庫数が指定されている場合、その在庫数以上の商品をクエリに追加
-        if ($min_stock = $request->min_stock) {
-            $query->where('stock', '>=', $min_stock);
-        }
-
-        // 最大在庫数が指定されている場合、その在庫数以下の商品をクエリに追加
-        if ($max_stock = $request->max_stock) {
-            $query->where('stock', '<=', $max_stock);
-        }
-
-        // ソートのパラメータが指定されている場合、そのカラムでソートを行う
-        if ($sort = $request->sort) {
-            $direction = $request->direction == 'desc' ? 'desc' : 'asc';
-            $query->orderBy($sort, $direction);
-        }
-
-        $products = $query->paginate(10);
-
-        return response()->json([
-            'products' => $products,
-            'companies' => $companies,
-            'keyword' => $keyword,
-            'companyId' => $companyId
-        ]);
+        return $this->index($request);
     }
 
-    public function create()
+
+
+   public function create()
     {
-        
-        $companies = Company::all();
-        $products = Product::all();
-
-        return view('products.create', compact('companies'));
+    $companies = Company::all();
+    return view('products.create', ['companies' => $companies]);
     }
 
+   public function store(ProductRequest $request)
+    {
+    $product = new Product([
+        'product_name' => $request->get('product_name'),
+        'company_id' => $request->get('company_id'),
+        'price' => $request->get('price'),
+        'stock' => $request->get('stock'),
+        'comment' => $request->get('comment'),
+    ]);
+
+    if($request->hasFile('img_path')){ 
+        $filename = $request->img_path->getClientOriginalName();
+        $filePath = $request->img_path->storeAs('products', $filename, 'public');
+        $product->img_path = '/storage/' . $filePath;
+    }
+
+    DB::beginTransaction();
+
+    try {
+        $product->save();
+
+        DB::commit();
+        session()->flash('success', '製品が正常に作成されました。');
+        return redirect()->back();
+    } catch (\Exception $e) {
+        DB::rollBack();
+        return back()->withErrors(['エラーが発生しました。製品の作成に失敗しました。']);
     
-    public function store(ProductRequest $request)
-    {
-        $product = new Product([
-            'product_name' => $request->get('product_name'),
-            'company_id' => $request->get('company_id'),
-            'price' => $request->get('price'),
-            'stock' => $request->get('stock'),
-            'comment' => $request->get('comment'),
-        ]);
-
-        if($request->hasFile('img_path')){ 
-            $filename = $request->img_path->getClientOriginalName();
-            $filePath = $request->img_path->storeAs('products', $filename, 'public');
-            $product->img_path = '/storage/' . $filePath;
-        }
-
-        DB::beginTransaction();
-
-        try {
-            $product->save();
-
-            DB::commit();
-            session()->flash('success', '製品が正常に作成されました。');
-            return redirect()->back();
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return back()->withErrors(['エラーが発生しました。製品の作成に失敗しました。']);
-        
-        }
-
-        return redirect('products');
     }
+
+    return redirect('products');
+    }
+
 
     public function show(Product $product)
-    {
     
+    {
+        
         return view('products.show', ['product' => $product]);
     
     }
 
-
-
     public function edit(Product $product)
     {
+        
         $companies = Company::all();
 
         return view('products.edit', compact('product', 'companies'));
     }
-    
+
     public function update(ProductRequest $request, Product $product) {
 
         $product->product_name = $request->product_name;
@@ -167,27 +166,20 @@ class ProductController extends Controller
         }
     }
 
-    
 
-    public function destroy($id)
-{
-    try {
-        $product = Product::findOrFail($id);
-        $product->delete();
-        return response()->json([
-            'success' => true,
-            'message' => '商品が正常に削除されました。',
-            'deleted_id' => $id
-        ]);
-    } catch (\Exception $e) {
-        return response()->json([
-            'success' => false,
-            'message' => '商品の削除に失敗しました。',
-            'error' => $e->getMessage()
-        ], 500);
-    }
-}
-    
-    
+    public function destroy(Request $request,$id )
+
+    {
+        
+        try {
+            Product::destroy($id);
+           return response()->json(['message' => '削除しました。'], 200);
+        } catch (\Exception $e) {
+            return response()->json(['message' => '削除に失敗しました。'], 500);
+       }
      
+
+
+        
+    }
 }
